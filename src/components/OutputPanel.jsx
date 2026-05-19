@@ -104,7 +104,7 @@ export function OutputPanel({ form, onPrint }) {
               </h3>
               <button
                 type="button"
-                onClick={() => copy(`【${section.title}】\n${section.body}`, section.key)}
+                onClick={() => copy(`${section.title}：\n${section.body}`, section.key)}
                 className={clsx(
                   "no-print inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition",
                   copiedKey === section.key
