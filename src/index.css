@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Noto Sans TC", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Inter", "Noto Sans TC", system-ui, sans-serif;
+
+  --color-brand-50: #f0f7ff;
+  --color-brand-100: #e0eefe;
+  --color-brand-200: #bae0fd;
+  --color-brand-300: #7dc8fc;
+  --color-brand-400: #38aaf8;
+  --color-brand-500: #0e90e9;
+  --color-brand-600: #0073c7;
+  --color-brand-700: #015ba1;
+  --color-brand-800: #064d85;
+  --color-brand-900: #0a416e;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(125, 200, 252, 0.35), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(180, 213, 252, 0.35), transparent 60%),
+    linear-gradient(180deg, #f5f8ff 0%, #eef3fb 100%);
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Glass card */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 10px 30px -10px rgba(15, 23, 42, 0.18),
+    0 4px 12px -4px rgba(15, 23, 42, 0.08);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 16px 40px -12px rgba(15, 23, 42, 0.22),
+    0 6px 16px -6px rgba(15, 23, 42, 0.1);
+}
+
+/* Subtle scrollbar */
+.scroll-soft::-webkit-scrollbar { width: 10px; height: 10px; }
+.scroll-soft::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
+}
+.scroll-soft::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
+.scroll-soft::-webkit-scrollbar-track { background: transparent; }
+
+/* Print styles */
+@media print {
+  body { background: white; }
+  .no-print { display: none !important; }
+  .print-area {
+    box-shadow: none !important;
+    background: white !important;
+    border: none !important;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 200ms ease-out; }
