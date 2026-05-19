@@ -37,6 +37,7 @@ export const defaultForm = {
   visionNote: "",
   hearing: "清楚",
   hearingSide: "",
+  hearingNote: "",
   expression: "清楚",
   expressionNote: "",
   cognition: "清楚",

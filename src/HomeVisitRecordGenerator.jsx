@@ -282,6 +282,11 @@ export default function HomeVisitRecordGenerator() {
                   options={hearingSideOptions}
                   placeholder="（無註記）"
                 />
+                <TextInput
+                  value={form.hearingNote}
+                  onCommit={(v) => setField("hearingNote", v)}
+                  placeholder="補充說明（如：配戴助聽器）"
+                />
               </div>
             </SubGrid>
 

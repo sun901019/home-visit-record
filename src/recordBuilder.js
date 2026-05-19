@@ -45,8 +45,9 @@ function buildPhysicalSection(form) {
     sensoryParts.push(`視覺${form.vision}${note}`);
   }
   if (form.hearing) {
-    const side = form.hearingSide ? `（${form.hearingSide}）` : "";
-    sensoryParts.push(`聽覺${form.hearing}${side}`);
+    const notes = [form.hearingSide, form.hearingNote].filter(Boolean).join("，");
+    const suffix = notes ? `（${notes}）` : "";
+    sensoryParts.push(`聽覺${form.hearing}${suffix}`);
   }
   if (form.expression) {
     const note = form.expressionNote ? `（${form.expressionNote}）` : "";
