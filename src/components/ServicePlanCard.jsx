@@ -1,5 +1,5 @@
-import { Trash2, Plus, Minus } from "lucide-react";
-import { dayOptions, frequencyOptions, serviceGoalOptions } from "../data";
+import { Trash2 } from "lucide-react";
+import { dayOptions, frequencyOptions } from "../data";
 import { ChipGroup, Field, Select, TextInput } from "./Inputs";
 import { ServiceCodePicker } from "./ServiceCodePicker";
 
@@ -14,17 +14,11 @@ export function ServicePlanCard({ plan, index, onUpdate, onRemove, removable }) 
     onUpdate({ ...plan, serviceCodes: codes, serviceCounts: counts });
   };
 
-  const setCount = (code, value) => {
-    const n = Math.max(0, parseInt(value || "0", 10) || 0);
+  const setCount = (code, n) => {
     const counts = { ...(plan.serviceCounts || {}) };
     if (n > 0) counts[code] = n;
     else delete counts[code];
     onUpdate({ ...plan, serviceCounts: counts });
-  };
-
-  const adjustCount = (code, delta) => {
-    const current = (plan.serviceCounts || {})[code] || 0;
-    setCount(code, String(Math.max(0, current + delta)));
   };
 
   return (
@@ -74,64 +68,17 @@ export function ServicePlanCard({ plan, index, onUpdate, onRemove, removable }) 
       </div>
 
       <div className="mt-4">
-        <Field label="服務項目" hint="多選">
+        <Field label="服務項目" hint="多選；可直接在已選碼別上填當日次數">
           <ServiceCodePicker
             selectedCodes={plan.serviceCodes || []}
             onChange={setServiceCodes}
+            counts={plan.serviceCounts || {}}
+            onCountChange={setCount}
             placeholder="點此挑選服務代碼"
             buttonLabel="本排程已選"
           />
         </Field>
       </div>
-
-      {plan.serviceCodes && plan.serviceCodes.length > 0 && (
-        <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-3">
-          <p className="mb-2 text-xs font-semibold text-slate-600">每日服務次數</p>
-          <div className="grid gap-2 md:grid-cols-2">
-            {plan.serviceCodes.map((code) => {
-              const item = serviceGoalOptions.find((o) => o.code === code);
-              if (!item) return null;
-              const count = (plan.serviceCounts || {})[code] || "";
-              return (
-                <div
-                  key={code}
-                  className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-1.5 text-sm shadow-sm"
-                >
-                  <span className="min-w-0 truncate">
-                    <span className="font-mono text-xs font-semibold text-brand-700">
-                      {item.code}
-                    </span>{" "}
-                    <span className="text-slate-700">{item.name}</span>
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => adjustCount(code, -1)}
-                      className="grid h-6 w-6 place-items-center rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      value={count}
-                      onChange={(e) => setCount(code, e.target.value)}
-                      className="w-12 rounded-md border border-slate-200 px-1.5 py-1 text-center text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => adjustCount(code, 1)}
-                      className="grid h-6 w-6 place-items-center rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

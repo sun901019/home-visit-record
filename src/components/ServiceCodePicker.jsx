@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Check, Search, X } from "lucide-react";
+import { ChevronDown, Check, Search, X, Minus, Plus } from "lucide-react";
 import clsx from "clsx";
 import { serviceGoalOptions } from "../data";
 
@@ -9,7 +9,18 @@ export function ServiceCodePicker({
   placeholder = "選擇服務代碼",
   buttonLabel,
   compact = false,
+  counts,
+  onCountChange,
 }) {
+  const showCounts = typeof onCountChange === "function";
+  const getCount = (code) => (counts && counts[code]) || 0;
+  const setCount = (code, value) => {
+    const n = Math.max(0, parseInt(value || "0", 10) || 0);
+    onCountChange(code, n);
+  };
+  const adjustCount = (code, delta) => {
+    setCount(code, String(Math.max(0, getCount(code) + delta)));
+  };
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef(null);
@@ -92,17 +103,61 @@ export function ServiceCodePicker({
           {selectedCodes.map((code) => {
             const item = serviceGoalOptions.find((o) => o.code === code);
             if (!item) return null;
+            const count = getCount(code);
             return (
               <span
                 key={code}
-                className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-1 text-xs font-medium text-brand-800"
+                className={clsx(
+                  "inline-flex items-center gap-1 rounded-full bg-brand-100 text-xs font-medium text-brand-800",
+                  showCounts ? "py-0.5 pl-2.5 pr-1" : "px-2.5 py-1",
+                )}
               >
                 <span className="font-mono text-[11px] text-brand-700">{item.code}</span>
                 <span>{item.name}</span>
+                {showCounts && (
+                  <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-white/80 px-1 py-0.5 shadow-inner">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        adjustCount(code, -1);
+                      }}
+                      className="grid h-4 w-4 place-items-center rounded-full text-brand-700 hover:bg-brand-200"
+                      aria-label={`減少 ${item.code} 次數`}
+                    >
+                      <Minus className="h-2.5 w-2.5" />
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      value={count || ""}
+                      onChange={(e) => setCount(code, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="次"
+                      className="w-7 bg-transparent text-center text-[11px] font-semibold text-brand-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      aria-label={`${item.code} 次數`}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        adjustCount(code, 1);
+                      }}
+                      className="grid h-4 w-4 place-items-center rounded-full text-brand-700 hover:bg-brand-200"
+                      aria-label={`增加 ${item.code} 次數`}
+                    >
+                      <Plus className="h-2.5 w-2.5" />
+                    </button>
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={(e) => removeCode(code, e)}
-                  className="ml-0.5 grid h-4 w-4 place-items-center rounded-full text-brand-700 hover:bg-brand-200"
+                  className={clsx(
+                    "grid h-4 w-4 place-items-center rounded-full text-brand-700 hover:bg-brand-200",
+                    showCounts ? "ml-0.5 mr-1" : "ml-0.5",
+                  )}
+                  aria-label={`移除 ${item.code}`}
                 >
                   <X className="h-3 w-3" />
                 </button>
