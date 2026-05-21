@@ -11,12 +11,16 @@ function endSentence(text) {
   return /[。！？!?]$/.test(trimmed) ? trimmed : `${trimmed}。`;
 }
 
-function rocDate(iso) {
-  if (!iso) return "";
-  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return iso;
-  const rocYear = parseInt(m[1], 10) - 1911;
-  return `${rocYear}/${m[2]}/${m[3]}`;
+function formatServiceDate(value) {
+  if (!value) return "";
+  const s = String(value).trim();
+  if (!s) return "";
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const rocYear = parseInt(iso[1], 10) - 1911;
+    return `${rocYear}/${iso[2]}/${iso[3]}`;
+  }
+  return s;
 }
 
 function joinComma(items, sep = "，") {
@@ -284,7 +288,7 @@ function buildServicePlanText(plan) {
       return count ? `${item.code}*${count}` : item.code;
     })
     .filter(Boolean)
-    .join("、");
+    .join("+");
 
   if (!codes) return "";
 
@@ -300,10 +304,38 @@ function buildServicePlanText(plan) {
 
 function buildAsNeededCodesText(form) {
   if (!form.asNeededCodes || !form.asNeededCodes.length) return "";
+  const notesMap = form.asNeededNotes || {};
+  const otherNotes = form.asNeededOtherNotes || {};
+
   return form.asNeededCodes
     .map((code) => {
       const item = lookupService(code);
-      return item ? item.code : "";
+      if (!item) return "";
+
+      const rawNotes = notesMap[code];
+      const notes = Array.isArray(rawNotes)
+        ? rawNotes
+        : rawNotes
+          ? [rawNotes]
+          : [];
+
+      const resolved = notes
+        .map((n) => (n === "其他" ? otherNotes[code] || "" : n))
+        .filter(Boolean);
+
+      const hasRain = resolved.includes("雨天時使用");
+      const hasPoor = resolved.includes("體況不佳時使用");
+      const remaining = resolved.filter(
+        (n) => n !== "雨天時使用" && n !== "體況不佳時使用",
+      );
+      const merged = [
+        ...remaining,
+        ...(hasRain && hasPoor ? ["雨天、體況不佳時使用"] : []),
+        ...(hasRain && !hasPoor ? ["雨天時使用"] : []),
+        ...(!hasRain && hasPoor ? ["體況不佳時使用"] : []),
+      ];
+
+      return merged.length ? `${item.code}(${merged.join("、")})` : item.code;
     })
     .filter(Boolean)
     .join("、");
@@ -311,48 +343,38 @@ function buildAsNeededCodesText(form) {
 
 function buildCarePlan(form) {
   const sentences = [];
+  const isInit = form.visitType === "初訪";
 
-  // 第一句：今日訪視+簽約
-  const verb =
-    form.visitType === "初訪"
-      ? "初訪"
-      : form.visitType === "複訪"
-        ? "複訪"
-        : form.visitType === "結案訪視"
-          ? "進行結案訪視"
-          : form.visitType || "訪視";
-
-  let firstSentence = `今日${verb}個案`;
-  if (form.visitType === "初訪") {
-    if (form.contractFamily) {
-      firstSentence += `，向${form.contractFamily}解釋過合約內容後，簽立合約書`;
-    } else {
-      firstSentence += `，向家屬解釋過合約內容後，簽立合約書`;
-    }
-  }
-  sentences.push(endSentence(firstSentence));
-
-  // 第二句：首次服務日期
-  if (form.firstServiceDate) {
+  // 第一句：初訪才寫「今日初訪個案，向...解釋過合約內容後，簽立合約書」
+  if (isInit) {
+    const family = form.contractFamily || "家屬";
     sentences.push(
-      endSentence(`本單位預計於${rocDate(form.firstServiceDate)}提供第一次居家服務`),
+      endSentence(`今日初訪個案，向${family}解釋過合約內容後，簽立合約書`),
     );
   }
 
-  // 第三句：服務計畫
+  // 第二句：初訪且填了首次服務日期
+  if (isInit && form.firstServiceDate) {
+    sentences.push(
+      endSentence(`本單位預計於${formatServiceDate(form.firstServiceDate)}提供第一次居家服務`),
+    );
+  }
+
+  // 第三句：依服務計畫…
   const planTexts = (form.servicePlans || [])
     .map(buildServicePlanText)
     .filter(Boolean);
+  const asNeeded = buildAsNeededCodesText(form);
 
   if (planTexts.length) {
-    let planSentence = `依服務計畫${planTexts.join("；")}`;
-    const asNeeded = buildAsNeededCodesText(form);
-    if (asNeeded) {
-      planSentence += `，遇雨或體況不佳則調整為${asNeeded}`;
-    } else if (form.rainyPlan) {
+    const planParts = [planTexts.join("、"), asNeeded].filter(Boolean);
+    let planSentence = `依服務計畫${planParts.join("、")}`;
+    if (form.rainyPlan) {
       planSentence += `，${form.rainyPlan}`;
     }
     sentences.push(endSentence(planSentence));
+  } else if (asNeeded) {
+    sentences.push(endSentence(`依服務計畫${asNeeded}`));
   } else if (form.rainyPlan) {
     sentences.push(endSentence(form.rainyPlan));
   }
@@ -361,9 +383,11 @@ function buildCarePlan(form) {
 }
 
 export function buildRecordSections(form) {
+  const sectionTwoTitle =
+    form.visitType === "三個月例行家訪" ? "二、服務狀況" : "二、服務需求";
   return [
     { key: "case", title: "一、個案現況", body: buildCaseStatus(form) },
-    { key: "need", title: "二、服務需求", body: buildServiceNeed(form) },
+    { key: "need", title: sectionTwoTitle, body: buildServiceNeed(form) },
     { key: "goal", title: "三、服務目標", body: buildServiceGoals(form) },
     { key: "plan", title: "四、照顧計畫", body: buildCarePlan(form) },
   ];

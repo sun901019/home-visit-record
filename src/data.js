@@ -91,10 +91,10 @@ export const defaultForm = {
   ],
 };
 
-export const STORAGE_KEY = "homeVisitRecordGeneratorFormV2";
-export const HISTORY_KEY = "homeVisitRecordGeneratorHistoryV2";
+export const STORAGE_KEY = "homeVisitRecordGeneratorFormV3";
+export const HISTORY_KEY = "homeVisitRecordGeneratorHistoryV3";
 
-export const visitTypeOptions = ["初訪", "複訪", "結案訪視"];
+export const visitTypeOptions = ["初訪", "三個月例行家訪"];
 
 export const consciousnessOptions = ["清楚", "嗜睡", "混亂", "昏迷"];
 export const sensoryOptions = ["清楚", "輕度退化", "中度退化", "重度退化"];
@@ -117,3 +117,97 @@ export const welfareOptions = ["無", "中低收", "低收入戶", "身心障礙
 export const frequencyOptions = ["每週", "隔週", "單次"];
 export const dayOptions = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 export const asNeededNoteOptions = ["需要時使用", "雨天時使用", "體況不佳時使用", "其他"];
+
+export const formExamples = {
+  outing: {
+    ...defaultForm,
+    visitType: "初訪",
+    contractFamily: "案女",
+    reason: "因個案較憂鬱，長時間待在家，家屬希望可請居服員陪伴外出至附近公園、市場等地方走走，因此申請長照服務",
+    sleep: "失眠",
+    sleepNote: "有使用安眠藥，原有日夜顛倒狀況，經作息調整後已有改善",
+    diseaseControl: ["服藥", "定期門診"],
+    weight: "減輕",
+    weightNote: "三個月內瘦2公斤",
+    swallow: "偶爾嗆咳",
+    emotion: ["穩定"],
+    transfer: "需協助",
+    shopping: "需協助",
+    medicationUse: "需協助",
+    incontinence: "需協助",
+    incontinenceNote: "主要為小便來不及",
+    falls: "1次",
+    fallsNote: "約半年前曾跌倒",
+    assistiveDevices: ["單拐"],
+    supervisorEducation:
+      "吞嚥時避免頭抬高，頭部可稍微偏低，並可於平時進行吞嚥訓練；另可做下肢運動，協助維持肌力",
+    serviceNeed:
+      "案女希望陪同個案外出散步，若遇到鄰居可和鄰居聊聊天，增加活動量及社交，期望減少憂鬱情緒及維持肌力",
+    selectedGoalCodes: ["BA13"],
+    firstServiceDate: "115/04/22",
+    servicePlans: [
+      {
+        frequency: "每週",
+        days: ["週一", "週二", "週三", "週四", "週五"],
+        time: "早上約08:00-09:00",
+        serviceCodes: ["BA13"],
+        serviceCounts: { BA13: 2 },
+      },
+    ],
+    asNeededCodes: ["BA20"],
+    asNeededNotes: { BA20: ["雨天時使用", "體況不佳時使用"] },
+    asNeededOtherNotes: {},
+    rainyPlan: "",
+  },
+  bathing: {
+    ...defaultForm,
+    visitType: "初訪",
+    contractFamily: "案女、案夫",
+    sleep: "失眠",
+    sleepNote: "晚上易醒",
+    diseaseControl: ["服藥", "定期門診"],
+    transfer: "需協助",
+    toileting: "需協助",
+    bathing: "需協助",
+    dressing: "需協助",
+    shopping: "需協助",
+    medicationUse: "需協助",
+    incontinence: "需協助",
+    incontinenceNote: "小便失禁無感",
+    falls: "1次",
+    fallsNote: "上個月跨越浴室門檻時跌倒",
+    assistiveDevices: ["四腳拐", "助行器", "輪椅"],
+    homeSafety: "需改善",
+    homeSafetyNote: "客廳雜物多、浴室門檻高",
+    serviceNeed: "白天子女上班，案夫年齡已大，藉由居服員陪伴減輕案夫照顧壓力",
+    selectedGoalCodes: ["BA07", "BA20", "BA13"],
+    firstServiceDate: "115/01/19",
+    servicePlans: [
+      {
+        frequency: "每週",
+        days: ["週一", "週三", "週四", "週五"],
+        time: "早上約08:30-09:30",
+        serviceCodes: ["BA20"],
+        serviceCounts: { BA20: 2 },
+      },
+      {
+        frequency: "每週",
+        days: ["週二"],
+        time: "早上約08:30-09:30",
+        serviceCodes: ["BA13", "BA07"],
+        serviceCounts: { BA13: 2, BA07: 1 },
+      },
+      {
+        frequency: "每週",
+        days: ["週四"],
+        time: "下午約15:40-16:40",
+        serviceCodes: ["BA07"],
+        serviceCounts: { BA07: 1 },
+      },
+    ],
+    asNeededCodes: [],
+    asNeededNotes: {},
+    asNeededOtherNotes: {},
+    rainyPlan: "",
+  },
+};

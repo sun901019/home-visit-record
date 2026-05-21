@@ -19,6 +19,7 @@ import {
   STORAGE_KEY,
   HISTORY_KEY,
   defaultForm,
+  formExamples,
   visitTypeOptions,
   consciousnessOptions,
   sensoryOptions,
@@ -48,20 +49,36 @@ import { AsNeededEditor } from "./components/AsNeededEditor";
 import { OutputPanel } from "./components/OutputPanel";
 import { HistoryDrawer } from "./components/HistoryDrawer";
 
+function migrateForm(saved) {
+  const next = { ...defaultForm, ...saved };
+
+  if (!visitTypeOptions.includes(next.visitType)) {
+    next.visitType = "初訪";
+  }
+
+  const rawNotes = next.asNeededNotes || {};
+  const migratedNotes = {};
+  Object.keys(rawNotes).forEach((code) => {
+    const v = rawNotes[code];
+    migratedNotes[code] = Array.isArray(v) ? v : v ? [v] : [];
+  });
+  next.asNeededNotes = migratedNotes;
+  next.asNeededOtherNotes = next.asNeededOtherNotes || {};
+
+  next.servicePlans =
+    next.servicePlans && next.servicePlans.length
+      ? next.servicePlans
+      : defaultForm.servicePlans;
+
+  return next;
+}
+
 function getInitialForm() {
   if (typeof window === "undefined") return defaultForm;
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (!saved) return defaultForm;
-    const parsed = JSON.parse(saved);
-    return {
-      ...defaultForm,
-      ...parsed,
-      servicePlans:
-        parsed.servicePlans && parsed.servicePlans.length
-          ? parsed.servicePlans
-          : defaultForm.servicePlans,
-    };
+    return migrateForm(JSON.parse(saved));
   } catch (_error) {
     return defaultForm;
   }
@@ -146,6 +163,12 @@ export default function HomeVisitRecordGenerator() {
     }
   };
 
+  const loadExample = (key) => {
+    const sample = formExamples[key];
+    if (!sample) return;
+    setForm(sample);
+  };
+
   const saveToHistory = () => {
     const id = `${Date.now()}`;
     const entry = {
@@ -159,7 +182,7 @@ export default function HomeVisitRecordGenerator() {
   };
 
   const loadHistory = (savedForm) => {
-    setForm({ ...defaultForm, ...savedForm });
+    setForm(migrateForm(savedForm));
   };
 
   const deleteHistory = (id) => {
@@ -194,6 +217,24 @@ export default function HomeVisitRecordGenerator() {
 
       <main className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,460px)] lg:items-start">
         <div className="space-y-6 no-print">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/70 p-3 shadow-sm">
+            <span className="text-xs font-semibold text-slate-500">快捷範例</span>
+            <button
+              type="button"
+              onClick={() => loadExample("outing")}
+              className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-brand-100 hover:text-brand-700"
+            >
+              套用外出陪伴範例
+            </button>
+            <button
+              type="button"
+              onClick={() => loadExample("bathing")}
+              className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-brand-100 hover:text-brand-700"
+            >
+              套用沐浴陪伴範例
+            </button>
+          </div>
+
           <Section
             icon={ClipboardList}
             title="基本資訊"
@@ -628,11 +669,15 @@ export default function HomeVisitRecordGenerator() {
                 placeholder="鑰匙、寵物、特殊禁忌等"
               />
             </Field>
-            <Field label="服務需求">
+            <Field label={form.visitType === "三個月例行家訪" ? "服務狀況" : "服務需求"}>
               <TextArea
                 value={form.serviceNeed}
                 onCommit={(v) => setField("serviceNeed", v)}
-                placeholder="家屬主訴需求"
+                placeholder={
+                  form.visitType === "三個月例行家訪"
+                    ? "例：目前服務執行穩定，家屬表示時間及內容符合需求"
+                    : "家屬主訴需求"
+                }
               />
             </Field>
           </Section>
@@ -642,27 +687,10 @@ export default function HomeVisitRecordGenerator() {
               <ServiceCodePicker
                 selectedCodes={form.selectedGoalCodes}
                 onChange={(v) => setField("selectedGoalCodes", v)}
-                placeholder="點此挑選服務目標"
-                buttonLabel="目標代碼已選"
+                placeholder="請選擇服務目標碼別"
+                showGoalHint
               />
             </Field>
-            <SubGrid cols={2}>
-              <Field label="首次服務日期">
-                <TextInput
-                  type="date"
-                  value={form.firstServiceDate}
-                  onCommit={(v) => setField("firstServiceDate", v)}
-                  placeholder="YYYY-MM-DD"
-                />
-              </Field>
-              <Field label="雨天備案">
-                <TextInput
-                  value={form.rainyPlan}
-                  onCommit={(v) => setField("rainyPlan", v)}
-                  placeholder="例：雨天改為室內活動"
-                />
-              </Field>
-            </SubGrid>
           </Section>
 
           <Section
@@ -671,7 +699,26 @@ export default function HomeVisitRecordGenerator() {
             description="可建立多筆排程，例：每週一三五早上 BA01"
             accent="emerald"
           >
-            <div className="space-y-3">
+            <SubGrid cols={2}>
+              {form.visitType === "初訪" && (
+                <Field label="第一次服務日期" hint="例：115/04/22">
+                  <TextInput
+                    value={form.firstServiceDate}
+                    onCommit={(v) => setField("firstServiceDate", v)}
+                    placeholder="例：115/04/22"
+                  />
+                </Field>
+              )}
+              <Field label="備案／特殊條件">
+                <TextInput
+                  value={form.rainyPlan}
+                  onCommit={(v) => setField("rainyPlan", v)}
+                  placeholder="例：遇雨或體況不佳則調整為BA20"
+                />
+              </Field>
+            </SubGrid>
+
+            <div className="mt-4 space-y-3">
               {form.servicePlans.map((plan, idx) => (
                 <ServicePlanCard
                   key={idx}

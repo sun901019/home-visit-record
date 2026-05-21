@@ -1,30 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Check, Search, X, Minus, Plus } from "lucide-react";
+import { ChevronDown, Check, Search } from "lucide-react";
 import clsx from "clsx";
 import { serviceGoalOptions } from "../data";
+import { TextInput } from "./Inputs";
 
 export function ServiceCodePicker({
   selectedCodes,
   onChange,
   placeholder = "選擇服務代碼",
-  buttonLabel,
-  compact = false,
   counts,
   onCountChange,
+  showGoalHint = false,
 }) {
-  const showCounts = typeof onCountChange === "function";
-  const getCount = (code) => (counts && counts[code]) || 0;
-  const setCount = (code, value) => {
-    const n = Math.max(0, parseInt(value || "0", 10) || 0);
-    onCountChange(code, n);
-  };
-  const adjustCount = (code, delta) => {
-    setCount(code, String(Math.max(0, getCount(code) + delta)));
-  };
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef(null);
   const inputRef = useRef(null);
+  const perRow = typeof onCountChange === "function";
 
   useEffect(() => {
     if (!open) return;
@@ -65,15 +57,13 @@ export function ServiceCodePicker({
   const toggleCode = (code) => {
     if (selectedCodes.includes(code)) {
       onChange(selectedCodes.filter((c) => c !== code));
+      if (perRow && counts && counts[code]) onCountChange(code, 0);
     } else {
       onChange([...selectedCodes, code]);
     }
   };
 
-  const removeCode = (code, e) => {
-    e?.stopPropagation();
-    onChange(selectedCodes.filter((c) => c !== code));
-  };
+  const getCount = (code) => (counts && counts[code]) || "";
 
   return (
     <div ref={containerRef} className="relative">
@@ -85,10 +75,13 @@ export function ServiceCodePicker({
           open && "border-brand-400 ring-4 ring-brand-100",
         )}
       >
-        <span className={clsx("flex-1 truncate", !selectedCodes.length && "text-slate-400")}>
-          {selectedCodes.length
-            ? `${buttonLabel || "已選"} ${selectedCodes.length} 項`
-            : placeholder}
+        <span
+          className={clsx(
+            "flex-1 truncate font-mono text-[13px]",
+            !selectedCodes.length && "font-sans text-slate-400",
+          )}
+        >
+          {selectedCodes.length ? selectedCodes.join("、") : placeholder}
         </span>
         <ChevronDown
           className={clsx(
@@ -97,75 +90,6 @@ export function ServiceCodePicker({
           )}
         />
       </button>
-
-      {!compact && selectedCodes.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {selectedCodes.map((code) => {
-            const item = serviceGoalOptions.find((o) => o.code === code);
-            if (!item) return null;
-            const count = getCount(code);
-            return (
-              <span
-                key={code}
-                className={clsx(
-                  "inline-flex items-center gap-1 rounded-full bg-brand-100 text-xs font-medium text-brand-800",
-                  showCounts ? "py-0.5 pl-2.5 pr-1" : "px-2.5 py-1",
-                )}
-              >
-                <span className="font-mono text-[11px] text-brand-700">{item.code}</span>
-                <span>{item.name}</span>
-                {showCounts && (
-                  <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-white/80 px-1 py-0.5 shadow-inner">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        adjustCount(code, -1);
-                      }}
-                      className="grid h-4 w-4 place-items-center rounded-full text-brand-700 hover:bg-brand-200"
-                      aria-label={`減少 ${item.code} 次數`}
-                    >
-                      <Minus className="h-2.5 w-2.5" />
-                    </button>
-                    <input
-                      type="number"
-                      min="0"
-                      value={count || ""}
-                      onChange={(e) => setCount(code, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      placeholder="次"
-                      className="w-7 bg-transparent text-center text-[11px] font-semibold text-brand-800 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                      aria-label={`${item.code} 次數`}
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        adjustCount(code, 1);
-                      }}
-                      className="grid h-4 w-4 place-items-center rounded-full text-brand-700 hover:bg-brand-200"
-                      aria-label={`增加 ${item.code} 次數`}
-                    >
-                      <Plus className="h-2.5 w-2.5" />
-                    </button>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={(e) => removeCode(code, e)}
-                  className={clsx(
-                    "grid h-4 w-4 place-items-center rounded-full text-brand-700 hover:bg-brand-200",
-                    showCounts ? "ml-0.5 mr-1" : "ml-0.5",
-                  )}
-                  aria-label={`移除 ${item.code}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            );
-          })}
-        </div>
-      )}
 
       {open && (
         <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/40 animate-fade-in">
@@ -188,35 +112,63 @@ export function ServiceCodePicker({
             {filtered.map((opt) => {
               const checked = selectedCodes.includes(opt.code);
               return (
-                <button
-                  type="button"
+                <div
                   key={opt.code}
-                  onClick={() => toggleCode(opt.code)}
                   className={clsx(
-                    "flex w-full items-start gap-3 rounded-lg px-3 py-2 text-left text-sm transition",
+                    "rounded-lg px-2 py-1.5 transition",
                     checked ? "bg-brand-50" : "hover:bg-slate-50",
                   )}
                 >
-                  <span
+                  <div
                     className={clsx(
-                      "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border transition",
-                      checked
-                        ? "border-brand-500 bg-brand-500 text-white"
-                        : "border-slate-300 bg-white",
+                      "grid items-center gap-2",
+                      perRow ? "grid-cols-[1fr_92px]" : "grid-cols-1",
                     )}
                   >
-                    {checked && <Check className="h-3 w-3" />}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-semibold text-brand-700">
-                        {opt.code}
+                    <button
+                      type="button"
+                      onClick={() => toggleCode(opt.code)}
+                      className="flex w-full items-start gap-3 rounded-md px-1 py-1 text-left text-sm"
+                    >
+                      <span
+                        className={clsx(
+                          "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border transition",
+                          checked
+                            ? "border-brand-500 bg-brand-500 text-white"
+                            : "border-slate-300 bg-white",
+                        )}
+                      >
+                        {checked && <Check className="h-3 w-3" />}
                       </span>
-                      <span className="font-medium text-slate-800">{opt.name}</span>
-                    </span>
-                    <span className="mt-0.5 block text-xs text-slate-500">{opt.goal}</span>
-                  </span>
-                </button>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-semibold text-brand-700">
+                            {opt.code}
+                          </span>
+                          <span className="font-medium text-slate-800">{opt.name}</span>
+                        </span>
+                        {showGoalHint && (
+                          <span className="mt-0.5 block text-xs text-slate-500">
+                            生成：{opt.goal}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+
+                    {perRow && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <TextInput
+                          value={getCount(opt.code)}
+                          onCommit={(v) => onCountChange(opt.code, v)}
+                          placeholder="次數"
+                          inputMode="numeric"
+                          disabled={!checked}
+                          className="h-9 px-2 py-1 text-center text-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
               );
             })}
           </div>

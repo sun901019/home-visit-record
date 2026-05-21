@@ -14,7 +14,8 @@ export function ServicePlanCard({ plan, index, onUpdate, onRemove, removable }) 
     onUpdate({ ...plan, serviceCodes: codes, serviceCounts: counts });
   };
 
-  const setCount = (code, n) => {
+  const setCount = (code, value) => {
+    const n = parseInt(value || "0", 10) || 0;
     const counts = { ...(plan.serviceCounts || {}) };
     if (n > 0) counts[code] = n;
     else delete counts[code];
@@ -68,14 +69,13 @@ export function ServicePlanCard({ plan, index, onUpdate, onRemove, removable }) 
       </div>
 
       <div className="mt-4">
-        <Field label="服務項目" hint="多選；可直接在已選碼別上填當日次數">
+        <Field label="碼別＋次數" hint="勾選碼別後，在右側填當日次數">
           <ServiceCodePicker
             selectedCodes={plan.serviceCodes || []}
             onChange={setServiceCodes}
             counts={plan.serviceCounts || {}}
             onCountChange={setCount}
-            placeholder="點此挑選服務代碼"
-            buttonLabel="本排程已選"
+            placeholder="請選擇碼別＋組合名稱"
           />
         </Field>
       </div>
